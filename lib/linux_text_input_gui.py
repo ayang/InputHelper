@@ -1,5 +1,8 @@
 #!/usr/bin/env python
+import gobject
 import pygtk
+import subprocess
+import time
 
 pygtk.require('2.0')
 import gtk
@@ -23,6 +26,12 @@ class SimpleTextInput:
         if keyname == 'Escape':
             gtk.main_quit()
 
+    def open_fcitx(self):
+        if subprocess.check_output(['fcitx-remote']).strip() == '2':
+            return True
+        ret = subprocess.call(['fcitx-remote', '-o'])
+        return False
+
     def __init__(self):
         # create a new window
         self.print_text_flag = False
@@ -38,6 +47,13 @@ class SimpleTextInput:
         self.textInput.connect("key_press_event", self.on_key_press)
         window.add(self.textInput)
         window.show_all()
+        try:
+            with open('/dev/null', 'w') as devnull:
+                ret = subprocess.call(['fcitx-remote'], stdout=devnull)
+        except OSError:
+            pass
+        else:
+            gobject.timeout_add(100, self.open_fcitx)
 
     def main(self):
         gtk.main()
